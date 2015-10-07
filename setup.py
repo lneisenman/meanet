@@ -7,17 +7,17 @@ try:
 except ImportError:
     from distutils.core import setup
 
-from distutils.extension import Extension
-from Cython.Build import cythonize
-
-import numpy
-
-
-source_files = ["meanet/meanet.pyx"]
-include_dirs = [numpy.get_include()]
-extensions = [Extension("meanet.meanet",
-                        sources=source_files,
-                        include_dirs=include_dirs)]
+#from distutils.extension import Extension
+#from Cython.Build import cythonize
+#
+#import numpy
+#
+#
+#source_files = ["meanet/meanet.pyx"]
+#include_dirs = [numpy.get_include()]
+#extensions = [Extension("meanet.meanet",
+#                        sources=source_files,
+#                        include_dirs=include_dirs)]
                         
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -25,7 +25,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read().replace('.. :changelog:', '')
 
-requirements = ['cython', 'numpy']
+requirements = ['networkx', 'numpy']
 
 
 setup(
@@ -51,12 +51,11 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
-        'Programming Language :: Cython',
         "Programming Language :: Python :: 2",
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
     ],
     test_suite='tests',
-    ext_modules=cythonize(extensions),
+#    ext_modules=cythonize(extensions),
 )

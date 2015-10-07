@@ -7,4 +7,4 @@ __author__ = 'Larry Eisenman'
 __email__ = 'leisenman@wustl.edu'
 __version__ = '0.1.0'
 
-from .meanet import helloworld
+from .meanet import corr_matrix_to_graph
