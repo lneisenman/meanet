@@ -6,6 +6,7 @@ from __future__ import (print_function, division, absolute_import,
 
 import networkx as nx
 import numpy as np
+import scipy.optimize as opt
 
 
 def corr_matrix_to_graph(corr, density, directed=False, tol=0.01):
@@ -33,6 +34,7 @@ def corr_matrix_to_graph(corr, density, directed=False, tol=0.01):
     num_connections = N * (N - 1) * density / 100
     if not directed:
         num_connections /= 2
+    num_connections = int(num_connections)
 
     low, high = 0, 1
     while (high - low >= tol):
@@ -53,3 +55,106 @@ def corr_matrix_to_graph(corr, density, directed=False, tol=0.01):
             high = threshold
 
     return graph, threshold
+
+
+def check_small_world_bias(corr, dmin=3, dmax=30, dnum=10,
+                             randomizations=20, seed=1):
+    """ Test to see if a method for defining edges produces networks with
+        excess clustering
+
+        This is based on Zalesky et al. Neuroimage 60:2096 2012
+        which demonstrated that standard correlation applied to random time
+        series resulted in networks with unexpectedly high clustering. The
+        cause is the observation that if A is correlated with B and B is
+        correlated with C, there is a high probability that A is correlated
+        with C
+
+    """
+
+    np.fill_diagonal(corr, 0)   # no self connections
+#    L_null = np.zeros(10)
+    C_null = np.zeros(10)
+#    L_rand = np.zeros(10)
+    C_test = np.zeros(10)
+    thresholds = np.zeros(10)
+    densities = np.linspace(3, 30, 10)
+    for i, density in enumerate(densities):
+        graph, threshold = corr_matrix_to_graph(corr, density, tol=0.0001)
+#        L_test[i] = nx.average_shortest_path_length(graph)
+        C_test[i] = nx.average_clustering(graph)
+        thresholds[i] = threshold
+#        L = np.zeros(randomizations)
+        C = np.zeros(randomizations)
+        for r in range(randomizations):
+            random = nx.expected_degree_graph(graph.degree().values(),
+                                              selfloops=False,
+                                              seed=seed + density + 100*r)
+#            L[r] = nx.average_shortest_path_length(random)
+            C[r] = nx.average_clustering(random)
+
+#        L_null[i] = np.average(L)
+        C_null[i] = np.average(C)
+
+    return C_test, C_null, densities
+
+
+def _cfp_function(x, maxi, delay, width, offset):
+    """ function to which the cfp result is fit
+
+        cfp = (max/(1 + ((x - delay)/width)**2)) + offset
+    """
+
+    return (maxi/(1 + ((x - delay)/width)**2)) + offset
+
+
+def _cfp_cost(p, y, x):
+    """ cost function for use in opt.minimize for fitting _cfp_function """
+
+    maxi, delay, width, offset = p
+    residual = y - _cfp_function(x, maxi, delay, width, offset)
+    residual_squared = np.square(residual)
+    return np.sum(residual_squared)
+
+
+def conditional_firing_probability(train1, train2, threshold=2, delay=5):
+    """ Calculate the conditional firing probability between two lists of
+        spike times
+
+        train1: numpy array of spike times in msec
+        train2: numpy array of spike times in msec
+        threshold: minimum amplitude of fit
+        delay: minimum peak time of fit in msec
+
+        For LeFeber the fit was performed with the following limits
+            0 <= max < 1
+            0 <= delay <= 500
+            1 <= width <= 100
+            0 <= offset <= 0.5
+
+        The followng was required to declare a connection
+            max/offset >= 2
+            5<= delay <= 250
+            width > 5
+
+    """
+
+    psth = np.zeros(500)
+    max2 = train2.shape[0]
+    indices = np.searchsorted(train2, train1, side='right')
+    for i, index in enumerate(indices):
+        j = index
+        while (j < max2) and (train2[j] - train1[i] < 500):
+            psth[int(train2[j] - train1[i])] += 1
+            j += 1
+
+    psth /= train1.shape[0]
+    xdata = np.arange(500)
+    maxi = np.max(psth)
+    delay = np.argmax(psth)
+    width = 10
+    offset = np.average(psth)
+    p0 = (maxi, delay, width, offset)
+    bounds = ((0, 1), (0, 500), (1, 100), (0, 0.5))
+    fit = opt.minimize(_cfp_cost, p0, bounds=bounds, args=(psth, xdata),
+                       method='SLSQP')
+    return fit, psth
