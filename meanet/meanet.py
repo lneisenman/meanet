@@ -9,7 +9,38 @@ import numpy as np
 import scipy.optimize as opt
 
 
-def corr_matrix_to_graph(corr, density, directed=False, tol=0.01):
+def _threshold_corr_matrix_to_graph(corr, threshold, directed=False):
+    """ Convert a correlation matrix to a NetworkX graph by thresholding
+        the correlation matrix. This version preserves the
+        identity of the contacts.
+    """
+    adj = _threshold_corr_matrix(corr, threshold)
+    N = adj.shape[0]
+    graph = nx.Graph()
+    if directed:
+        graph = nx.DiGraph()
+
+    for i in range(N):
+        for j in range(N):
+            if adj[i][j] == 1:
+                graph.add_edge(i, j)
+
+    return graph
+
+
+def _threshold_corr_matrix(corr, threshold):
+    """ Convert a correlation matrix to an adjacency matrix by thresholding
+        the correlation matrix.
+    """
+
+    adj_matrix = np.zeros_like(corr, dtype=np.int)
+    index = np.where(corr >= threshold)
+    adj_matrix[index] = 1
+    return adj_matrix
+
+
+def corr_matrix_to_graph(corr, threshold=0.5, density=None,
+                           directed=False, tol=0.01):
     """ Convert a correlation matrix to a NetworkX graph
 
     This function finds a threshold level such that creating a connection
@@ -20,8 +51,12 @@ def corr_matrix_to_graph(corr, density, directed=False, tol=0.01):
     corr: NxN 2-D numpy array where N is the number of nodes in the network.
           Values should all be between 0 and 1
 
+    threshold: value between zero and 1 such that an edge is present if the
+               corresponding value of corr is >= threshold
+    
     density: value between 0 and 100 representing the percentage of possible
-             connections that should be created
+             connections that should be created. If None, the network is
+             created based on the value of density
 
     directed: boolean. If true, return a directed network
 
@@ -29,6 +64,10 @@ def corr_matrix_to_graph(corr, density, directed=False, tol=0.01):
              corresponding threshold
 
     """
+
+    if density is None:
+        return (_threshold_corr_matrix_to_graph(corr, threshold, directed),
+                threshold)
 
     N = corr.shape[0]
     num_connections = N * (N - 1) * density / 100
@@ -39,10 +78,8 @@ def corr_matrix_to_graph(corr, density, directed=False, tol=0.01):
     low, high = 0, 1
     while (high - low >= tol):
         threshold = (low + high) / 2
-        adj_matrix = np.zeros_like(corr, dtype=np.int)
-        index = np.where(corr >= threshold)
-        adj_matrix[index] = 1
-        graph = nx.from_numpy_matrix(adj_matrix)
+        adj = _threshold_corr_matrix(corr, threshold, directed)
+        graph = nx.Graph(adj)
         num_edges = graph.number_of_edges()
         if num_edges == num_connections:
             return graph, threshold
@@ -116,7 +153,7 @@ def _cfp_cost(p, y, x):
     return np.sum(residual_squared)
 
 
-def conditional_firing_probability(train1, train2, threshold=2, delay=5):
+def conditional_firing_probability(train1, train2, min_points=0):
     """ Calculate the conditional firing probability between two lists of
         spike times
 
@@ -137,6 +174,10 @@ def conditional_firing_probability(train1, train2, threshold=2, delay=5):
             width > 5
 
     """
+    class Empty_Fit():
+        def __init__(self):
+            self.x = np.zeros(4)
+            self.x[-1] = 1
 
     psth = np.zeros(500)
     max2 = train2.shape[0]
@@ -147,14 +188,19 @@ def conditional_firing_probability(train1, train2, threshold=2, delay=5):
             psth[int(train2[j] - train1[i])] += 1
             j += 1
 
+    if np.sum(psth) < min_points:
+        return Empty_Fit(), psth
+
     psth /= train1.shape[0]
     xdata = np.arange(500)
     maxi = np.max(psth)
     delay = np.argmax(psth)
-    width = 10
+    width = 25
     offset = np.average(psth)
     p0 = (maxi, delay, width, offset)
     bounds = ((0, 1), (0, 500), (1, 100), (0, 0.5))
     fit = opt.minimize(_cfp_cost, p0, bounds=bounds, args=(psth, xdata),
-                       method='SLSQP')
+                       method='L-BFGS-B')
+#    fit = opt.differential_evolution(_cfp_cost, bounds=bounds,
+#                                     args=(psth, xdata))
     return fit, psth
