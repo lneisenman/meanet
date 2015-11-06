@@ -27,11 +27,11 @@ def test_corr_matrix_to_graph():
                        [0.6, 0.6, 0.2, 0, 0.4],
                        [0.8, 0.8, 0.6, 0.4, 0]])
 
-    graph, threshold = meanet.corr_matrix_to_graph(corr, 20)
+    graph, threshold = meanet.corr_matrix_to_graph(corr, density=20)
     assert threshold == 0.75
     assert graph.edges() == [(0, 4), (1, 4)]
 
-    graph, threshold = meanet.corr_matrix_to_graph(corr, 90)
+    graph, threshold = meanet.corr_matrix_to_graph(corr, density=90)
     assert threshold == 0.1953125
     assert graph.edges() == [(0, 1), (0, 2), (0, 3), (0, 4), (1, 2), (1, 3),
                              (1, 4), (2, 3), (2, 4), (3, 4)]
@@ -65,10 +65,21 @@ def test_conditional_firing_probability():
 #    print(train2)
 #    print(psth)
     print(result.x)
-    plt.plot(psth, '-g')
-    plt.plot(xdata, fit, '-b')
-    plt.show()
+#    plt.plot(psth, '-g')
+#    plt.plot(xdata, fit, '-b')
+#    plt.show()
+
+
+def test_shuffle():
+    def isi(dat):
+        return np.hstack([dat[0], dat[1:] - dat[0:-1]])
+
+    data = np.cumsum(np.arange(1, 10))
+    test = meanet.shuffle(data)
+    print(data)
+    print(test)
+    assert np.allclose(np.sort(isi(data)), np.sort(isi(test)))
 
 
 if __name__ == '__main__':
-    test_conditional_firing_probability()
+    test_shuffle()

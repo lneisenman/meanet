@@ -28,7 +28,7 @@ def _threshold_corr_matrix_to_graph(corr, threshold, directed=False):
     return graph
 
 
-def _threshold_corr_matrix(corr, threshold):
+def _threshold_corr_matrix(corr, threshold, directed=False):
     """ Convert a correlation matrix to an adjacency matrix by thresholding
         the correlation matrix.
     """
@@ -48,20 +48,24 @@ def corr_matrix_to_graph(corr, threshold=0.5, density=None,
     the threshold results in a network with the specified density of
     connections.
 
+    Parameters
+    ----------
     corr: NxN 2-D numpy array where N is the number of nodes in the network.
           Values should all be between 0 and 1
 
     threshold: value between zero and 1 such that an edge is present if the
                corresponding value of corr is >= threshold
-    
+
     density: value between 0 and 100 representing the percentage of possible
              connections that should be created. If None, the network is
              created based on the value of density
 
     directed: boolean. If true, return a directed network
 
-    returns: a tuple consisting of the resulting Networkx graph and the
-             corresponding threshold
+    Returns
+    --------
+    (graph, threshold): a tuple consisting of the resulting Networkx graph and
+        the corresponding threshold
 
     """
 
@@ -117,20 +121,21 @@ def check_small_world_bias(corr, dmin=3, dmax=30, dnum=10,
     densities = np.linspace(3, 30, 10)
     for i, density in enumerate(densities):
         graph, threshold = corr_matrix_to_graph(corr, density, tol=0.0001)
-#        L_test[i] = nx.average_shortest_path_length(graph)
-        C_test[i] = nx.average_clustering(graph)
-        thresholds[i] = threshold
-#        L = np.zeros(randomizations)
-        C = np.zeros(randomizations)
-        for r in range(randomizations):
-            random = nx.expected_degree_graph(graph.degree().values(),
-                                              selfloops=False,
-                                              seed=seed + density + 100*r)
-#            L[r] = nx.average_shortest_path_length(random)
-            C[r] = nx.average_clustering(random)
+        if len(graph) > 1:
+#            L_test[i] = nx.average_shortest_path_length(graph)
+            C_test[i] = nx.average_clustering(graph)
+            thresholds[i] = threshold
+#            L = np.zeros(randomizations)
+            C = np.zeros(randomizations)
+            for r in range(randomizations):
+                random = nx.expected_degree_graph(graph.degree().values(),
+                                                  selfloops=False,
+                                                  seed=seed + density + 100*r)
+#                L[r] = nx.average_shortest_path_length(random)
+                C[r] = nx.average_clustering(random)
 
-#        L_null[i] = np.average(L)
-        C_null[i] = np.average(C)
+#            L_null[i] = np.average(L)
+            C_null[i] = np.average(C)
 
     return C_test, C_null, densities
 
