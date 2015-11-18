@@ -72,7 +72,7 @@ def test_conditional_firing_probability():
 
 def test_shuffle():
     def isi(dat):
-        return np.hstack([dat[0], dat[1:] - dat[0:-1]])
+        return np.hstack([dat[0], np.diff(dat)])
 
     data = np.cumsum(np.arange(1, 10))
     test = meanet.shuffle(data)

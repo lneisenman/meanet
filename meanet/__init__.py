@@ -13,4 +13,6 @@ from .meanet import (check_small_world_bias, conditional_firing_probability,
 
 from .drawmea import draw_MEA_graph
 
-from .random import shuffle
+from .random import shuffle, shuffle_MEA
+
+from .mea import MEA

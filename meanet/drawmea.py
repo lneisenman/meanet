@@ -42,11 +42,13 @@ def draw_MEA_graph(mea, node_color='r', node_size=400, font_size=12,
         MEADict[key] = 80 + j
         key += 1
 
+    plt.figure()
     nx.draw_networkx(fullMEA, layout, node_color='w', node_size=node_size,
                      linewidths=node_width, font_size=font_size)
     nx.draw_networkx(mea, layout, node_color=node_color, node_size=node_size,
                      linewidths=node_width, font_size=font_size,
                      width=edge_width)
+    plt.axis('off')
 
 
 if __name__ == '__main__':
