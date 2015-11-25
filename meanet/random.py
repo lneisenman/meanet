@@ -4,9 +4,11 @@ from __future__ import (print_function, division, absolute_import,
                         unicode_literals)
 
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from .mea import MEA
+from .meanet import corr_matrix_to_graph, calc_cfp_from_MEA
 
 
 def shuffle(data):
@@ -33,3 +35,39 @@ def shuffle_MEA(mea):
             shuffled[key] = shuffle(mea[key])
 
     return shuffled
+
+
+def _cfp_corr(mea):
+    cfp = calc_cfp_from_MEA(mea)
+    return cfp['corr']
+
+
+def bootstrap_test(mea, N=10, threshold=0.66, corr_fcn=_cfp_corr,
+                   colors=['#0072B2', '#D55E00']):
+    corr = corr_fcn(mea)
+    graph, _ = corr_matrix_to_graph(corr, threshold=threshold)
+    n_true = graph.number_of_nodes()
+    e_true = graph.number_of_edges()
+    nodes = np.zeros(N)
+    edges = np.zeros(N)
+    for i in range(N):
+        shuffled = shuffle_MEA(mea)
+        corr = corr_fcn(shuffled)
+        graph, _ = corr_matrix_to_graph(corr, threshold=threshold)
+        nodes[i] = graph.number_of_nodes()
+        edges[i] = graph.number_of_edges()
+
+    n_min = nodes.min()
+    n_max = nodes.max()
+    nodes_hist = plt.figure()
+    plt.hist(nodes, bins=n_max - n_min, align='left', color=colors[0])
+    plt.title('Nodes Histogram')
+    plt.axvline(x=n_true, linewidth=8, color=colors[1])
+
+    edges_hist = plt.figure()
+    e_min = edges.min()
+    e_max = edges.max()
+    plt.hist(edges, bins=e_max - e_min, align='left', color=colors[0])
+    plt.title('Edges Histogram')
+    plt.axvline(x=e_true, linewidth=8, color=colors[1])
+    return nodes_hist, edges_hist

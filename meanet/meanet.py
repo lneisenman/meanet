@@ -209,3 +209,53 @@ def conditional_firing_probability(train1, train2, min_points=0):
 #    fit = opt.differential_evolution(_cfp_cost, bounds=bounds,
 #                                     args=(psth, xdata))
     return fit, psth
+
+
+def calc_cfp_from_MEA(mea):
+    cfp = conditional_firing_probability
+    active = [key for key in range(60) if len(mea[key]) >= 250]
+    N = len(active)
+    peak = np.zeros((60, 60))
+    delay = np.zeros((60, 60))
+    width = np.zeros((60, 60))
+    baseline = np.zeros((60, 60))
+    num = np.zeros((60, 60))
+    psth = np.zeros((60, 60, 500))
+    for i in range(N-1):
+        for j in range(i+1, N):
+            ai = active[i]
+            aj = active[j]
+            fit, psth[ai, aj, :] = cfp(mea[ai]*1000, mea[aj]*1000)
+            peak[ai, aj] = fit.x[0]
+            delay[ai, aj] = fit.x[1]
+            width[ai, aj] = fit.x[2]
+            baseline[ai, aj] = fit.x[3]
+            num[ai, aj] = len(mea[ai])
+
+            fit, psth[aj, ai, :] = cfp(mea[aj]*1000, mea[ai]*1000)
+            peak[aj, ai] = fit.x[0]
+            delay[aj, ai] = fit.x[1]
+            width[aj, ai] = fit.x[2]
+            baseline[aj, ai] = fit.x[3]
+            num[aj, ai] = len(mea[aj])
+
+    corr = _calc_corr_matrix(peak, delay, width, baseline)
+    return {'peak': peak, 'delay': delay, 'width': width, 'baseline': baseline,
+            'psth': psth, 'corr': corr, 'num': num}
+
+
+def _calc_corr_matrix(peak, delay, width, baseline):
+    """
+    5<= delay <= 250
+    width > 5
+    """
+    corr = np.zeros_like(peak)
+    index = np.where(peak > 0)
+    corr[index] = peak[index] / (peak[index] + baseline[index])
+    index = np.where(delay < 5)
+    corr[index] = 0
+    index = np.where(delay > 250)
+    corr[index] = 0
+    index = np.where(width < 5)
+    corr[index] = 0
+    return corr
