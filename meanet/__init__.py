@@ -10,6 +10,9 @@ __version__ = '0.1.0'
 
 from .drawmea import draw_MEA_graph
 
+from .graph_theory import (analyse_data, bullmore_average_shortest_path_length,
+                           old_average_shortest_path_length)
+
 from .mea import MEA
 
 from .meanet import (check_small_world_bias, conditional_firing_probability,

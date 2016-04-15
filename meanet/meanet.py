@@ -158,7 +158,8 @@ def _cfp_cost(p, y, x):
     return np.sum(residual_squared)
 
 
-def conditional_firing_probability(train1, train2, min_points=0):
+def conditional_firing_probability(train1, train2, min_points=0,
+                                   method=None):
     """ Calculate the conditional firing probability between two lists of
         spike times
 
@@ -198,20 +199,24 @@ def conditional_firing_probability(train1, train2, min_points=0):
 
     psth /= train1.shape[0]
     xdata = np.arange(500)
-    maxi = np.max(psth)
-    delay = np.argmax(psth)
-    width = 25
     offset = np.average(psth)
+    maxi = np.max(psth) - offset
+    delay = np.argmax(psth)
+    width = delay/2 if delay/2 > 5 else 5
     p0 = (maxi, delay, width, offset)
     bounds = ((0, 1), (0, 500), (1, 100), (0, 0.5))
+    if method == 'DE':
+        fit = opt.differential_evolution(_cfp_cost, bounds=bounds, seed=1,
+                                         args=(psth, xdata), maxiter=100,
+                                         polish=False)
+        p0 = fit.x
+
     fit = opt.minimize(_cfp_cost, p0, bounds=bounds, args=(psth, xdata),
                        method='L-BFGS-B')
-#    fit = opt.differential_evolution(_cfp_cost, bounds=bounds,
-#                                     args=(psth, xdata))
     return fit, psth
 
 
-def calc_cfp_from_MEA(mea):
+def calc_cfp_from_MEA(mea, min_points=0, method=None):
     cfp = conditional_firing_probability
     active = [key for key in range(60) if len(mea[key]) >= 250]
     N = len(active)
@@ -225,14 +230,16 @@ def calc_cfp_from_MEA(mea):
         for j in range(i+1, N):
             ai = active[i]
             aj = active[j]
-            fit, psth[ai, aj, :] = cfp(mea[ai]*1000, mea[aj]*1000)
+            fit, psth[ai, aj, :] = cfp(mea[ai]*1000, mea[aj]*1000, min_points,
+                                       method)
             peak[ai, aj] = fit.x[0]
             delay[ai, aj] = fit.x[1]
             width[ai, aj] = fit.x[2]
             baseline[ai, aj] = fit.x[3]
             num[ai, aj] = len(mea[ai])
 
-            fit, psth[aj, ai, :] = cfp(mea[aj]*1000, mea[ai]*1000)
+            fit, psth[aj, ai, :] = cfp(mea[aj]*1000, mea[ai]*1000, min_points,
+                                       method)
             peak[aj, ai] = fit.x[0]
             delay[aj, ai] = fit.x[1]
             width[aj, ai] = fit.x[2]

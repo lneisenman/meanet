@@ -37,14 +37,14 @@ def shuffle_MEA(mea):
     return shuffled
 
 
-def _cfp_corr(mea):
-    cfp = calc_cfp_from_MEA(mea)
+def _cfp_corr(mea, **kwargs):
+    cfp = calc_cfp_from_MEA(mea, **kwargs)
     return cfp['corr']
 
 
 def bootstrap_test(mea, N=10, threshold=0.66, corr_fcn=_cfp_corr,
-                   colors=['#0072B2', '#D55E00']):
-    corr = corr_fcn(mea)
+                   colors=['#0072B2', '#D55E00'], **kwargs):
+    corr = corr_fcn(mea, **kwargs)
     graph, _ = corr_matrix_to_graph(corr, threshold=threshold)
     n_true = graph.number_of_nodes()
     e_true = graph.number_of_edges()
@@ -52,7 +52,7 @@ def bootstrap_test(mea, N=10, threshold=0.66, corr_fcn=_cfp_corr,
     edges = np.zeros(N)
     for i in range(N):
         shuffled = shuffle_MEA(mea)
-        corr = corr_fcn(shuffled)
+        corr = corr_fcn(shuffled, **kwargs)
         graph, _ = corr_matrix_to_graph(corr, threshold=threshold)
         nodes[i] = graph.number_of_nodes()
         edges[i] = graph.number_of_edges()
