@@ -19,3 +19,5 @@ from .meanet import (check_small_world_bias, conditional_firing_probability,
                      corr_matrix_to_graph, calc_cfp_from_MEA)
 
 from .random import shuffle, shuffle_MEA, bootstrap_test
+
+from .raster import draw_raster
