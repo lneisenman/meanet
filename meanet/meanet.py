@@ -34,7 +34,7 @@ def _threshold_corr_matrix(corr, threshold, directed=False):
     """
 
     adj_matrix = np.zeros_like(corr, dtype=np.int)
-    index = np.where(corr >= threshold)
+    index = np.where(np.logical_and(threshold > 0, corr >= threshold))
     adj_matrix[index] = 1
     return adj_matrix
 

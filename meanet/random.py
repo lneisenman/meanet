@@ -71,3 +71,21 @@ def bootstrap_test(mea, N=10, threshold=0.66, corr_fcn=_cfp_corr,
     plt.title('Edges Histogram')
     plt.axvline(x=e_true, linewidth=8, color=colors[1])
     return nodes_hist, edges_hist
+
+
+def calc_random_threshold(mea, N=10, sd=3, corr_fcn=_cfp_corr, **kwargs):
+    """ calculate thresholds for graph edges
+
+    Shuffle mea data N times and calculate CFP for each shuffled mea
+    thresholds are defined as the mean CFP + sd*(standard deviation)
+    returns numpy array of thresholds
+    """
+    shuffled_corrs = np.zeros((60, 60, N))
+    for i in range(N):
+        shuffled = shuffle_MEA(mea)
+        corr = corr_fcn(shuffled, **kwargs)
+        shuffled_corrs[:, :, i] = corr
+
+    threshold = np.mean(shuffled_corrs, axis=2)
+    threshold += sd * np.std(shuffled_corrs, axis=2)
+    return threshold

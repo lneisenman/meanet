@@ -6,7 +6,7 @@ from __future__ import (print_function, division, absolute_import,
 
 import matplotlib.pyplot as plt
 
-from mea import MEA
+from .mea import MEA
 
 
 def draw_raster(mea):

@@ -13,11 +13,11 @@ from .drawmea import draw_MEA_graph
 from .graph_theory import (analyse_data, bullmore_average_shortest_path_length,
                            old_average_shortest_path_length)
 
-from .mea import MEA
+from .mea import MEA, time_window
 
 from .meanet import (check_small_world_bias, conditional_firing_probability,
                      corr_matrix_to_graph, calc_cfp_from_MEA)
 
-from .random import shuffle, shuffle_MEA, bootstrap_test
+from .random import shuffle, shuffle_MEA, bootstrap_test, calc_random_threshold
 
 from .raster import draw_raster

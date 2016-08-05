@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
-""" This class implements a dictionary of numpy arrays that can be indexed by
-a string composed of the row and column number of the corresponding MEA or by
-an integer index between zero and 59. It also has a field ('dur')for the
-duration of the data collection.
-"""
 
 from __future__ import (print_function, division,
                         absolute_import, unicode_literals)
 
 import numpy as np
 
+import h5shelve
+
 
 class MEA():
+    """ This class implements a dictionary of numpy arrays that can be indexed
+    by a string composed of the row and column number of the corresponding MEA
+    or by an integer index between zero and 59. It also has a field ('dur')for
+    the duration of the data collection.
+    """
 
     def __init__(self, filename=None):
 
@@ -60,3 +62,19 @@ class MEA():
 
     def __contains__(self, item):
         return (item in self.spike_times.keys())
+
+
+def time_window(mea, start_time, end_time):
+    """ return a new MEA with spikes that occur at or after 'start' and before
+        'end' """
+    assert start_time >= 0
+    assert end_time <= mea.dur
+
+    windowed_mea = MEA()
+    windowed_mea.dur = mea.dur
+    for i in range(60):
+        window = np.where(np.logical_and(start_time <= mea[i],
+                                         mea[i] < end_time))
+        windowed_mea[i] = mea[i][window].copy()
+
+    return windowed_mea

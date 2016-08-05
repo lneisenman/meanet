@@ -11,7 +11,6 @@ Tests for `meanet` module.
 from __future__ import (print_function, absolute_import,
                         division, unicode_literals)
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -79,6 +78,19 @@ def test_shuffle():
     print(data)
     print(test)
     assert np.allclose(np.sort(isi(data)), np.sort(isi(test)))
+
+
+def test_time_window():
+    np.random.seed(0)
+    mea = meanet.MEA()
+    mea.dur = 1000
+    mea[1] = np.arange(1, 500)
+    mea[2] = np.arange(250, 750)
+    mea[3] = np.arange(800, 1000)
+    test = meanet.time_window(mea, 600, 900)
+    assert len(test[1]) == 0
+    assert np.allclose(test[2], np.arange(600, 750))
+    assert np.allclose(test[3], np.arange(800, 900))
 
 
 if __name__ == '__main__':
