@@ -50,8 +50,9 @@ def draw_MEA_graph(mea, node_color='r', node_size=400, font_size=12,
                 linewidths=node_width, zorder=2)
 
     xy = np.asarray([layout[v] for v in list(mea)])
-    plt.scatter(xy[:, 0], xy[:, 1], s=node_size, c=node_color, edgecolors='k',
-                linewidths=node_width, zorder=2)
+    if len(xy) > 0:
+        plt.scatter(xy[:, 0], xy[:, 1], s=node_size, c=node_color,
+                    edgecolors='k', linewidths=node_width, zorder=2)
 
     nx.draw_networkx_edges(mea, layout, width=edge_width)
     nx.draw_networkx_labels(fullMEA, layout, font_size=font_size)
