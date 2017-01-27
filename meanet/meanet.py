@@ -39,8 +39,13 @@ def _threshold_corr_matrix(corr, threshold, directed=False):
     return adj_matrix
 
 
+def _density_cost(threshold, corr, density):
+    graph = _threshold_corr_matrix_to_graph(corr, threshold)
+    return abs(nx.density(graph) - density)
+
+
 def corr_matrix_to_graph(corr, threshold=0.5, density=None,
-                           directed=False, tol=0.01):
+                         directed=False, tol=0.01):
     """ Convert a correlation matrix to a NetworkX graph
 
     This function finds a threshold level such that creating a connection
@@ -73,27 +78,30 @@ def corr_matrix_to_graph(corr, threshold=0.5, density=None,
         return (_threshold_corr_matrix_to_graph(corr, threshold, directed),
                 threshold)
 
-    N = corr.shape[0]
-    num_connections = N * (N - 1) * density / 100
-    if not directed:
-        num_connections /= 2
-    num_connections = int(num_connections)
-
-    low, high = 0, 1
-    while (high - low >= tol):
-        threshold = (low + high) / 2
-        adj = _threshold_corr_matrix(corr, threshold, directed)
-        graph = nx.Graph(adj)
-        num_edges = graph.number_of_edges()
-        if num_edges == num_connections:
-            return graph, threshold
-
-        if num_edges > num_connections:
-            # threshold is too low
-            low = threshold
-        else:
-            # threshold is too high
-            high = threshold
+    fit = opt.minimize(_density_cost, 0.5, bounds=[(0, 1)],
+                       args=(corr, density), method='L-BFGS-B')
+    fit = opt.differential_evolution(_density_cost, bounds=[(0, 1)], seed=1,
+                                     args=(corr, density), maxiter=500,
+                                     polish=True)
+    threshold = fit.x[0]
+    graph = _threshold_corr_matrix_to_graph(corr, threshold, directed)
+        #    low, high = -0.8, 1     # force testing from low threshold
+#    while (high - low >= tol):
+#        threshold = (low + high) / 2
+#        if threshold <= 0:
+#            threshold = 0.01
+#
+#        graph = _threshold_corr_matrix_to_graph(corr, threshold, directed)
+#        graph_density = nx.density(graph)
+#        if np.allclose(density, graph_density, atol=1e-3):
+#            return graph, threshold
+#
+#        if graph_density > density:
+#            # threshold is too low
+#            low = threshold
+#        else:
+#            # threshold is too high
+#            high = threshold
 
     return graph, threshold
 

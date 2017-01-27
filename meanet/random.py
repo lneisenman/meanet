@@ -27,7 +27,8 @@ def shuffle(data):
     return np.cumsum(np.random.permutation(isi[::-1]))
 
 
-def shuffle_MEA(mea):
+def shuffle_MEA(mea, seed=None):
+    np.random.seed(seed)
     shuffled = MEA()
     shuffled.dur = mea.dur
     for key in mea.keys():

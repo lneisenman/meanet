@@ -10,7 +10,7 @@ import numpy as np
 
 
 def draw_MEA_graph(mea, node_color='r', node_size=400, font_size=12,
-                     node_width=2, edge_width=2):
+                     node_width=2, edge_width=2, fig=None):
     """ Draw a graph from MEA data """
     MEADict = dict()
     key = 0
@@ -42,12 +42,19 @@ def draw_MEA_graph(mea, node_color='r', node_size=400, font_size=12,
         MEADict[key] = 80 + j
         key += 1
 
-    plt.figure()
-    nx.draw_networkx(fullMEA, layout, node_color='w', node_size=node_size,
-                     linewidths=node_width, font_size=font_size)
-    nx.draw_networkx(mea, layout, node_color=node_color, node_size=node_size,
-                     linewidths=node_width, font_size=font_size,
-                     width=edge_width)
+    if fig is None:
+        plt.figure()
+
+    xy = np.asarray([layout[v] for v in list(fullMEA)])
+    plt.scatter(xy[:, 0], xy[:, 1], s=node_size, c='white', edgecolors='k',
+                linewidths=node_width, zorder=2)
+
+    xy = np.asarray([layout[v] for v in list(mea)])
+    plt.scatter(xy[:, 0], xy[:, 1], s=node_size, c=node_color, edgecolors='k',
+                linewidths=node_width, zorder=2)
+
+    nx.draw_networkx_edges(mea, layout, width=edge_width)
+    nx.draw_networkx_labels(fullMEA, layout, font_size=font_size)
     plt.axis('off')
 
 
@@ -55,5 +62,4 @@ if __name__ == '__main__':
     graph = nx.Graph()
     graph.add_edge(0, 22)
     draw_MEA_graph(graph)
-    plt.axis('off')
     plt.show()
