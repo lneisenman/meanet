@@ -61,7 +61,12 @@ class MEA():
         return self.spike_times.keys()
 
     def __contains__(self, item):
-        return (item in self.spike_times.keys())
+        if item in self.spike_times.keys():
+            return True
+        elif (isinstance(item, int)) and (0 <= item < 60):
+            return True
+        else:
+            return False
 
 
 def time_window(mea, start_time, end_time):
