@@ -132,12 +132,11 @@ def bullmore_average_shortest_path_length(G):
 
     # test for correct type of input
     if not isinstance(G, nx.classes.graph.Graph):
-        print('This function only works for undirected graphs')
-        return None
+        raise TypeError('This function only works for undirected graphs')
 
     # make sure the Graph isn't empty
     if len(G) == 0:
-        return 0
+        raise ValueError('The graph is empty')
 
     # create a numpy 2-d array of distances between nodes called matrix
     matrix = _distance_matrix(G)
