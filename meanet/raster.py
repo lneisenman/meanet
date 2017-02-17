@@ -9,13 +9,16 @@ import matplotlib.pyplot as plt
 from .mea import MEA
 
 
-def draw_raster(mea):
+def draw_raster(mea, start_time=0, end_time=None):
     """ Draw a raster plot from MEA data """
+    if end_time is None:
+        end_time = mea.dur
+
     fig = plt.figure()
     for i in range(60):
         plt.eventplot(mea[i], lineoffsets=i+0.5, colors=[(0, 0, 0)])
 
-    plt.xlim(0, mea.dur)
+    plt.xlim(start_time, end_time)
     plt.ylim(0, 60)
     return fig
 

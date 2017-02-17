@@ -177,5 +177,8 @@ def small_world_random(G):
     N = len(G)
     d = 2 * G.number_of_edges() / N
     C = d / N
-    L = np.log(N) / np.log(d)
+    if d == 1:
+        L = 1
+    else:
+        L = np.log(N) / np.log(d)
     return C, L
