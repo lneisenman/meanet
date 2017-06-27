@@ -9,17 +9,21 @@ import matplotlib.pyplot as plt
 from .mea import MEA
 
 
-def draw_raster(mea, start_time=0, end_time=None):
+def draw_raster(mea, fig=None, start_time=0, end_time=None):
     """ Draw a raster plot from MEA data """
     if end_time is None:
         end_time = mea.dur
 
-    fig = plt.figure()
-    for i in range(60):
+    if fig is None:
+        fig = plt.figure()
+
+    for i in range(len(mea)):
         plt.eventplot(mea[i], lineoffsets=i+0.5, colors=[(0, 0, 0)])
 
     plt.xlim(start_time, end_time)
-    plt.ylim(0, 60)
+    plt.ylim(0, len(mea))
+    plt.xlabel('Time (s)')
+    plt.ylabel('Channel')
     return fig
 
 if __name__ == '__main__':

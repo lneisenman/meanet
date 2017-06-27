@@ -8,7 +8,7 @@ import numpy as np
 import h5shelve
 
 
-class MEA():
+class MEA(dict):
     """ This class implements a dictionary of numpy arrays that can be indexed
     by a string composed of the row and column number of the corresponding MEA
     or by an integer index between zero and 59. It also has a field ('dur')for
@@ -52,7 +52,7 @@ class MEA():
 
     def __iter__(self):
         for key in self._ordered_keys:
-            yield self.spike_times[key]
+            yield key
 
     def iterkeys(self):
         return iter(self.keys())
@@ -63,10 +63,14 @@ class MEA():
     def __contains__(self, item):
         if item in self.spike_times.keys():
             return True
-        elif (isinstance(item, int)) and (0 <= item < 60):
+        elif (isinstance(item, int)) and (0 <= item < len(self._ordered_keys)):
             return True
         else:
             return False
+
+    def items(self):
+        for key in self._ordered_keys:
+            yield key, self[key]
 
 
 def time_window(mea, start_time, end_time):
@@ -77,7 +81,7 @@ def time_window(mea, start_time, end_time):
 
     windowed_mea = MEA()
     windowed_mea.dur = mea.dur
-    for i in range(60):
+    for i in range(len(self._ordered_keys)):
         window = np.where(np.logical_and(start_time <= mea[i],
                                          mea[i] < end_time))
         windowed_mea[i] = mea[i][window].copy()
